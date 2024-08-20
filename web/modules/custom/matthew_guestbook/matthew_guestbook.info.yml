@@ -1,0 +1,13 @@
+name: 'Matthew Guestbook'
+type: module
+description: 'A guestbook module for leaving comments and feedback.'
+core_version_requirement: ^8 || ^9 || ^10
+package: Custom
+version: 1.0
+dependencies:
+  - drupal:field
+  - drupal:text
+  - drupal:user
+  - drupal:media
+  - drupal:media_library
+  - media_library_form_element

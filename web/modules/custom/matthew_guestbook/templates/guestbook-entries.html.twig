@@ -1,0 +1,20 @@
+<div id="form-messages"></div>
+<div class="guestbook-entries">
+  {% if entries is empty %}
+  <p>{{ 'There are currently no entries in the guestbook.'|t }}</p>
+  <p>{{ 'You can add new entries by clicking the button below.'|t }}</p>
+  <a href="{{ path('matthew_guestbook.form') }}" class="button button--primary">{{ 'Add New Entry'|t }}</a>
+  {% else %}
+  {% for entry in entries %}
+    <div class="guestbook-entry">
+      <h3>{{ entry.name }}</h3>
+      <p><strong>Email:</strong> {{ entry.email }}</p>
+      <p><strong>Phone:</strong> {{ entry.phone }}</p>
+      <div class="content">{{ entry.message }}</div>
+      <small>{{ entry.created|date('d/m/Y H:i') }}</small>
+    </div>
+  {% else %}
+    <p>{{ 'No entries found.'|t }}</p>
+  {% endfor %}
+  {% endif %}
+</div>

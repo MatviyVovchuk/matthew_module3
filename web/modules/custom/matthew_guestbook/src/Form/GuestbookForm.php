@@ -119,6 +119,57 @@ class GuestbookForm extends FormBase {
       ],
     ];
 
+    $form['review'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Review'),
+      '#description' => $this->t('Enter your review.'),
+      '#required' => TRUE,
+      '#ajax' => [
+        'event' => 'change',
+        'callback' => '::validateReviewAjax',
+      ],
+    ];
+
+    $form['avatar'] = [
+      '#type' => 'media_library',
+      '#title' => $this->t('Avatar'),
+      '#description' => $this->t('Upload your avatar. Allowed formats: jpeg, jpg, png. Max file size: 2MB.'),
+      '#allowed_bundles' => ['avatar'],
+      '#required' => FALSE,
+      '#upload_validators' => [
+        'file_validate_extensions' => ['jpeg jpg png'],
+        'file_validate_size' => [2 * 1024 * 1024],
+      ],
+      '#ajax' => [
+        'callback' => '::validateAvatarAjax',
+        'event' => 'change',
+        'progress' => [
+          'type' => 'throbber',
+          'message' => $this->t('Validating...'),
+        ],
+      ],
+    ];
+
+    $form['review_image'] = [
+      '#type' => 'media_library',
+      '#title' => $this->t('Review Image'),
+      '#description' => $this->t('Upload an image for your review. Allowed formats: jpeg, jpg, png. Max file size: 5MB.'),
+      '#allowed_bundles' => ['review_image'],
+      '#required' => FALSE,
+      '#upload_validators' => [
+        'file_validate_extensions' => ['jpeg jpg png'],
+        'file_validate_size' => [5 * 1024 * 1024],
+      ],
+      '#ajax' => [
+        'callback' => '::validateReviewImageAjax',
+        'event' => 'change',
+        'progress' => [
+          'type' => 'throbber',
+          'message' => $this->t('Validating...'),
+        ],
+      ],
+    ];
+
     $form['actions']['#type'] = 'actions';
     $form['actions']['submit'] = [
       '#type' => 'submit',
@@ -260,6 +311,112 @@ class GuestbookForm extends FormBase {
   }
 
   /**
+   * AJAX callback to validate the review.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The AJAX response.
+   */
+  public function validateReviewAjax(array &$form, FormStateInterface $form_state): AjaxResponse {
+    $response = new AjaxResponse();
+    $message = $form_state->getValue('review');
+
+    if (empty($message)) {
+      $this->addValidationResponse($response, $this->t('The message cannot be empty.'), '[name="review"]', FALSE);
+    }
+    else {
+      $this->addValidationResponse($response, $this->t('The message is valid.'), '[name="review"]', TRUE);
+    }
+    return $response;
+  }
+
+  /**
+   * AJAX callback to validate the avatar.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The AJAX response.
+   */
+  public function validateAvatarAjax(array &$form, FormStateInterface $form_state) {
+    $ajax_response = new AjaxResponse();
+    $avatar = $form_state->getValue('avatar');
+
+    if (!empty($avatar) && is_array($avatar)) {
+      $media_entity = $this->entityTypeManager->getStorage('media')->load($avatar);
+      if ($media_entity) {
+        $file_id = $media_entity->get('field_media_image')->target_id;
+        if (!empty($file_id)) {
+          $file = $this->entityTypeManager->getStorage('file')->load($file_id);
+          if ($file) {
+            $errors = file_validate($file, $form['avatar']['#upload_validators']);
+            if (!empty($errors)) {
+              $error_message = reset($errors);
+              $this->addValidationResponse($ajax_response, $error_message, '[data-drupal-selector="edit-avatar-wrapper"]', FALSE);
+            }
+            else {
+              $this->addValidationResponse($ajax_response, $this->t('Avatar is valid.'), '[data-drupal-selector="edit-avatar-wrapper"]', TRUE);
+            }
+          }
+        }
+      }
+    }
+    else {
+      $this->addValidationResponse($ajax_response, $this->t('No avatar selected.'), '[data-drupal-selector="edit-avatar-wrapper"]', TRUE);
+    }
+
+    return $ajax_response;
+  }
+
+  /**
+   * AJAX callback to validate the review image.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The AJAX response.
+   */
+  public function validateReviewImageAjax(array &$form, FormStateInterface $form_state) {
+    $ajax_response = new AjaxResponse();
+    $review_image = $form_state->getValue('review_image');
+
+    if (!empty($review_image) && is_array($review_image)) {
+      $media_entity = $this->entityTypeManager->getStorage('media')->load($review_image);
+      if ($media_entity) {
+        $file_id = $media_entity->get('field_media_image')->target_id;
+        if (!empty($file_id)) {
+          $file = $this->entityTypeManager->getStorage('file')->load($file_id);
+          if ($file) {
+            $errors = file_validate($file, $form['review_image']['#upload_validators']);
+            if (!empty($errors)) {
+              $error_message = reset($errors);
+              $this->addValidationResponse($ajax_response, $error_message, '[data-drupal-selector="edit-review-image-wrapper"]', FALSE);
+            }
+            else {
+              $this->addValidationResponse($ajax_response, $this->t('Review image is valid.'), '[data-drupal-selector="edit-review-image-wrapper"]', TRUE);
+            }
+          }
+        }
+      }
+    }
+    else {
+      $this->addValidationResponse($ajax_response, $this->t('No review image selected.'), '[data-drupal-selector="edit-review-image-wrapper"]', TRUE);
+    }
+
+    return $ajax_response;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): AjaxResponse {
@@ -283,6 +440,49 @@ class GuestbookForm extends FormBase {
     // Validate message.
     if (empty($form_state->getValue('message'))) {
       $this->addValidationResponse($response, $this->t('The message cannot be empty.'), '#edit-cat-name', FALSE);
+    }
+
+    // Validate review.
+    if (empty($form_state->getValue('review'))) {
+      $form_state->setErrorByName('review', $this->t('The review cannot be empty.'));
+    }
+
+    // Validate avatar image.
+    $avatar = $form_state->getValue('avatar');
+    if (!empty($avatar) && is_array($avatar)) {
+      $media_entity = $this->entityTypeManager->getStorage('media')->load($avatar);
+      if ($media_entity) {
+        $file_id = $media_entity->get('field_media_image')->target_id;
+        if (!empty($file_id)) {
+          $file = $this->entityTypeManager->getStorage('file')->load($file_id);
+          if ($file) {
+            $errors = file_validate($file, $form['avatar']['#upload_validators']);
+            if (!empty($errors)) {
+              $error_message = reset($errors);
+              $this->addValidationResponse($response, $error_message, '#edit-avatar', FALSE);
+            }
+          }
+        }
+      }
+    }
+
+    // Validate review image.
+    $review_image = $form_state->getValue('review_image');
+    if (!empty($review_image) && is_array($review_image)) {
+      $media_entity = $this->entityTypeManager->getStorage('media')->load($review_image);
+      if ($media_entity) {
+        $file_id = $media_entity->get('field_media_image')->target_id;
+        if (!empty($file_id)) {
+          $file = $this->entityTypeManager->getStorage('file')->load($file_id);
+          if ($file) {
+            $errors = file_validate($file, $form['review_image']['#upload_validators']);
+            if (!empty($errors)) {
+              $error_message = reset($errors);
+              $this->addValidationResponse($response, $error_message, '#edit-review-image', FALSE);
+            }
+          }
+        }
+      }
     }
 
     return $response;
@@ -316,6 +516,9 @@ class GuestbookForm extends FormBase {
       'email' => $form_state->getValue('email'),
       'phone' => $form_state->getValue('phone'),
       'message' => $form_state->getValue('message'),
+      'review' => $form_state->getValue('review'),
+      'avatar' => $form_state->getValue('avatar'),
+      'review_image' => $form_state->getValue('review_image'),
       'created' => time(),
     ]);
 

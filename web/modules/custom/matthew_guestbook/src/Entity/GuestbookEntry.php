@@ -3,6 +3,7 @@
 namespace Drupal\matthew_guestbook\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 
@@ -19,7 +20,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *   },
  * )
  */
-class GuestbookEntry extends ContentEntityBase {
+class GuestbookEntry extends ContentEntityBase implements ContentEntityInterface {
 
   /**
    * {@inheritdoc}
@@ -44,6 +45,26 @@ class GuestbookEntry extends ContentEntityBase {
     $fields['message'] = BaseFieldDefinition::create('text_long')
       ->setLabel(t('Message'))
       ->setRequired(TRUE);
+
+    $fields['avatar'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Avatar'))
+      ->setSettings([
+        'target_type' => 'media',
+        'handler' => 'default',
+        'handler_settings' => [
+          'target_bundles' => ['avatar'],
+        ],
+      ]);
+
+    $fields['review_image'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Review Image'))
+      ->setSettings([
+        'target_type' => 'media',
+        'handler' => 'default',
+        'handler_settings' => [
+          'target_bundles' => ['review_image'],
+        ],
+      ]);
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))

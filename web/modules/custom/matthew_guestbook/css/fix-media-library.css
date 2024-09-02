@@ -1,0 +1,61 @@
+.media-library-form-element {
+  margin-bottom: 20px;
+}
+
+.media-library-form-element .fieldset-legend {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.media-library-form-element .description {
+  margin-top: 0.375rem;
+  margin-bottom: 0.375rem;
+  color: #6c757d;
+  font-size: 0.8rem;
+  line-height: 1.0625rem;
+}
+
+.media-library-selection {
+  margin-top: 10px;
+}
+
+.media-library-open-button {
+  margin-top: 10px;
+}
+
+.fieldset-wrapper {
+  margin: 1.5rem;
+}
+
+fieldset.media-library-form-element {
+  color: #6c757d;
+  padding-top: 0.25rem;
+  padding-left: 0;
+  padding-right: 0;
+  background: transparent;
+  border-radius: 0.375rem;
+  box-shadow: none;
+  border: 1px solid #dee2e6;
+  margin: 1rem 0;
+}
+
+fieldset.media-library-form-element legend {
+  display: contents;
+  float: left;
+  width: 100%;
+  margin-bottom: 1rem;
+  color: #333;
+  font-weight: bold;
+}
+
+.fieldset-wrapper div.js-media-library-selection.media-library-selection.js-form-wrapper.form-wrapper {
+  -webkit-margin-before: 0;
+  margin-block-start: 0;
+}
+
+.fieldset-wrapper p.media-library-form-element-empty-text {
+  margin: 0;
+}

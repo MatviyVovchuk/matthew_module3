@@ -1,0 +1,30 @@
+uuid: bf4d327f-43f9-48b3-8aad-e6324223b253
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_form_mode.media.media_library
+    - field.field.media.avatar.field_avatar_image
+    - image.style.thumbnail
+    - media.type.avatar
+  module:
+    - image
+id: media.avatar.media_library
+targetEntityType: media
+bundle: avatar
+mode: media_library
+content:
+  field_avatar_image:
+    type: image_image
+    weight: 1
+    region: content
+    settings:
+      progress_indicator: throbber
+      preview_image_style: thumbnail
+    third_party_settings: {  }
+hidden:
+  created: true
+  name: true
+  path: true
+  status: true
+  uid: true

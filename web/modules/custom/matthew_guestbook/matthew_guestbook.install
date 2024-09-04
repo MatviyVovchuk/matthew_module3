@@ -53,17 +53,8 @@ function matthew_guestbook_install(): void {
   ]);
 
   // Create custom image styles.
-  _matthew_guestbook_create_image_style('matthew_guestbook_avatar', 'Matthew Guestbook Avatar', [
-    [
-      'id' => 'image_resize',
-      'weight' => 0,
-      'data' => [
-        'width' => 50,
-        'height' => 50,
-      ],
-    ],
-  ]);
-  _matthew_guestbook_create_image_style('matthew_guestbook_review', 'Matthew Guestbook Review');
+  _matthew_guestbook_create_image_style('matthew_guestbook_avatar', 'Matthew Guestbook Avatar', TRUE);
+  _matthew_guestbook_create_image_style('matthew_guestbook_review', 'Matthew Guestbook Review', FALSE);
 }
 
 /**
@@ -103,13 +94,13 @@ function matthew_guestbook_uninstall(): void {
  *   The machine name of the image style to create.
  * @param string $style_label
  *   The label of the image style.
- * @param array|null $effects
- *   An array of image effects to add. Each effect should be an associative
- *   array with keys 'id', 'weight', and 'data' for the effect configuration.
+ * @param bool $use_resize_effect
+ *   Whether to add a default image resize effect with fixed dimensions
+ *   (50x50) to the image style.
  *
  * @throws \Drupal\Core\Entity\EntityStorageException
  */
-function _matthew_guestbook_create_image_style(string $style_name, string $style_label, ?array $effects = NULL): void {
+function _matthew_guestbook_create_image_style(string $style_name, string $style_label, bool $use_resize_effect): void {
   // Check if the style already exists.
   $style = ImageStyle::load($style_name);
   if (!$style) {
@@ -119,11 +110,16 @@ function _matthew_guestbook_create_image_style(string $style_name, string $style
       'label' => $style_label,
     ]);
 
-    // Add the image effects if provided.
-    if ($effects) {
-      foreach ($effects as $effect) {
-        $style->addImageEffect($effect);
-      }
+    // Add the image resize effect if the flag is true.
+    if ($use_resize_effect) {
+      $style->addImageEffect([
+        'id' => 'image_resize',
+        'weight' => 0,
+        'data' => [
+          'width' => 50,
+          'height' => 50,
+        ],
+      ]);
     }
 
     // Save the new style.

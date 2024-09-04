@@ -1,4 +1,4 @@
-uuid: 0d25ec7f-7f2a-4b41-a912-725b479dd3de
+uuid: 93e561ee-28a8-4e7a-9e09-09112b679ed0
 langcode: en
 status: true
 dependencies:
@@ -11,7 +11,7 @@ id: media.review_image.field_review_image
 field_name: field_review_image
 entity_type: media
 bundle: review_image
-label: 'Review Image'
+label: 'Review Image Image'
 description: ''
 required: true
 translatable: true

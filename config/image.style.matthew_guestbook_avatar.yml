@@ -1,0 +1,14 @@
+uuid: c37b7e40-1137-44fa-afbc-1840bb08ba7b
+langcode: en
+status: true
+dependencies: {  }
+name: matthew_guestbook_avatar
+label: 'Matthew Guestbook Avatar'
+effects:
+  5ea96cfe-2ebb-4e6d-b48d-1c9eb28dab9d:
+    uuid: 5ea96cfe-2ebb-4e6d-b48d-1c9eb28dab9d
+    id: image_resize
+    weight: 0
+    data:
+      width: 50
+      height: 50

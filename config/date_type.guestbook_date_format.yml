@@ -1,0 +1,3 @@
+label: 'Guestbook Date Format'
+locked: true
+pattern: custom.guestbook_date_format

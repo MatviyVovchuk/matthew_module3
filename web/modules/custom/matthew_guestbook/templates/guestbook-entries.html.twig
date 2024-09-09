@@ -30,15 +30,17 @@
 
         <!-- Third group: Contact details -->
         <div class="entry-group entry-contact">
-          <p class="entry-meta">{{ 'Email:'|t }} <a class="mail-phone-link" href="mailto:{{ entry.email.value }}">{{ entry.email.value }}</a></p>
-          <p class="entry-meta">{{ 'Phone:'|t }} <a class="mail-phone-link" href="tel:{{ entry.phone.value }}">{{ entry.phone.value }}</a></p>
+          {% for key, social_link in entry.social_links %}
+            <p class="entry-meta">{{ key|capitalize }}: {{ social_link }}</p>
+          {% endfor %}
         </div>
 
         <!-- Administrator actions -->
         {% if is_admin %}
           <div class="entry-actions">
-            <a href="{{ path('matthew_guestbook.edit', {'id': entry.id.value}) }}" class="button button--action button--primary edit-button">{{ 'Edit'|t }}</a>
-            <a href="{{ path('matthew_guestbook.delete', {'id': entry.id.value}) }}" class="button button--action button--danger delete-button">{{ 'Delete'|t }}</a>
+            {% for key, management_link in entry.management_links %}
+              {{ management_link }}
+            {% endfor %}
           </div>
         {% endif %}
       </div>

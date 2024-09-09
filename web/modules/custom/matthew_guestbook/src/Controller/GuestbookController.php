@@ -8,12 +8,19 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\matthew_guestbook\Service\GuestbookService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Controller for handling guestbook entries.
  */
 class GuestbookController extends ControllerBase {
+  /**
+   * The guestbook service.
+   *
+   * @var \Drupal\matthew_guestbook\Service\GuestbookService
+   */
+  protected $guestbookService;
 
   /**
    * The module extension list service.
@@ -53,6 +60,8 @@ class GuestbookController extends ControllerBase {
   /**
    * Constructs a new object.
    *
+   * @param \Drupal\matthew_guestbook\Service\GuestbookService $guestbook_service
+   *    The guestbook service to handle database operations.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
@@ -65,12 +74,14 @@ class GuestbookController extends ControllerBase {
    *   The date formatter service.
    */
   public function __construct(
+    GuestbookService $guestbook_service,
     EntityTypeManagerInterface $entity_type_manager,
     FormBuilderInterface $form_builder,
     FileUrlGeneratorInterface $file_url_generator,
     ModuleExtensionList $module_extension_list,
     DateFormatterInterface $date_formatter,
   ) {
+    $this->guestbookService = $guestbook_service;
     $this->entityTypeManager = $entity_type_manager;
     $this->formBuilder = $form_builder;
     $this->fileUrlGenerator = $file_url_generator;
@@ -83,6 +94,7 @@ class GuestbookController extends ControllerBase {
    */
   public static function create(ContainerInterface $container): GuestbookController|static {
     return new static(
+      $container->get('matthew.guestbook_service'),
       $container->get('entity_type.manager'),
       $container->get('form_builder'),
       $container->get('file_url_generator'),
@@ -92,96 +104,67 @@ class GuestbookController extends ControllerBase {
   }
 
   /**
-   * Get the render array for a given media entity ID.
-   *
-   * @param mixed $media_id
-   *   The ID of the media entity, or null if the field is empty.
-   * @param string $field_name
-   *   The field name of the media entity.
-   * @param string $image_style
-   *   The image style to apply.
-   *
-   * @return array
-   *   A render array for the image,
-   *   or an empty array if the media entity or file could not be loaded.
-   */
-  protected function getMediaFileRenderArray(mixed $media_id, string $field_name, string $image_style): array {
-    if (empty($media_id)) {
-      return [];
-    }
-
-    $media = $this->entityTypeManager->getStorage('media')->load($media_id);
-
-    if ($media && $media->hasField($field_name) && !$media->get($field_name)->isEmpty()) {
-      $file = $media->get($field_name)->entity;
-      if ($file) {
-        return [
-          '#theme' => 'image_style',
-          '#style_name' => $image_style,
-          '#uri' => $file->getFileUri(),
-          '#alt' => $media->label(),
-          '#attributes' => [
-            'class' => [$field_name === 'field_avatar_image' ? 'entry-avatar' : 'entry-review-image'],
-          ],
-        ];
-      }
-    }
-
-    return [];
-  }
-
-  /**
-   * Get the render array for the default avatar.
-   *
-   * @param string $name
-   *   The name of the entry author.
-   *
-   * @return array
-   *   A render array for the default avatar image.
-   */
-  protected function getDefaultAvatarRenderArray(string $name): array {
-    $module_path = $this->moduleExtensionList->getPath('matthew_guestbook');
-    $default_avatar_path = $module_path . '/images/default_avatar.jpg';
-
-    return [
-      '#theme' => 'image',
-      '#uri' => $default_avatar_path,
-      '#alt' => $name . "'s default avatar",
-      '#attributes' => [
-        'class' => ['entry-avatar'],
-      ],
-    ];
-  }
-
-  /**
    * Displays the guestbook entries form.
    *
    * @return array
    *   A render array for the guestbook entries form.
    */
   public function content(): array {
+    // Load all guestbook entries.
     $entries = $this->entityTypeManager->getStorage('guestbook_entry')->loadMultiple();
 
+    // Iterate through each entry and process the necessary data.
     foreach ($entries as $entry) {
+      // Load the avatar image or set a default avatar.
       $avatar_id = $entry->get('avatar')->target_id;
       $entry->avatar_render_array = $avatar_id
-        ? $this->getMediaFileRenderArray($avatar_id, 'field_avatar_image', 'matthew_guestbook_avatar')
-        : $this->getDefaultAvatarRenderArray($entry->get('name')->value);
+        ? $this->guestbookService->getMediaFileRenderArray($avatar_id, 'field_avatar_image', 'matthew_guestbook_avatar')
+        : $this->guestbookService->getDefaultAvatarRenderArray($entry->get('name')->value);
 
+      // Load the review image.
       $review_image_id = $entry->get('review_image')->target_id;
-      $entry->review_image_render_array = $this->getMediaFileRenderArray(
+      $entry->review_image_render_array = $this->guestbookService->getMediaFileRenderArray(
         $review_image_id,
         'field_review_image',
         'matthew_guestbook_review'
       );
 
+      // Format the created date.
       $entry->formatted_created_date = $this->dateFormatter->format(
         $entry->get('created')->value,
         'matthew_guestbook_date_format'
       );
 
+      // Generate the mailto and tel links.
+      $entry->social_links = [
+        'email' => $this->guestbookService->buildLink(
+          $entry->get('email')->value,
+          'mailto:' . $entry->get('email')->value,
+          ['class' => ['mail-phone-link']]
+        ),
+        'phone' => $this->guestbookService->buildLink(
+          $entry->get('phone')->value,
+          'tel:' . $entry->get('phone')->value,
+          ['class' => ['mail-phone-link']]
+        ),
+      ];
+
+      // Generate the edit and delete action links.
+      $entry->management_links = [
+        'edit' => $this->guestbookService->buildLink(
+          $this->t('Edit'),
+          \Drupal\Core\Url::fromRoute('matthew_guestbook.edit', ['id' => $entry->id()]),
+          ['class' => ['button', 'button--action', 'button--primary', 'edit-button']]
+        ),
+        'delete' => $this->guestbookService->buildLink(
+          $this->t('Delete'),
+          \Drupal\Core\Url::fromRoute('matthew_guestbook.delete', ['id' => $entry->id()]),
+          ['class' => ['button', 'button--action', 'button--danger', 'delete-button']]
+        ),
+      ];
     }
 
+    // Return the render array to be used in the template.
     return [
       '#theme' => 'guestbook-entries',
       '#entries' => $entries,
@@ -195,36 +178,6 @@ class GuestbookController extends ControllerBase {
         'contexts' => ['user'],
         'max-age' => 0,
       ],
-    ];
-  }
-
-  /**
-   * Provides an edit form for a guestbook entry.
-   *
-   * @param int $id
-   *   The ID of the guestbook entry to edit.
-   *
-   * @return array
-   *   A render array for the edit form.
-   */
-  public function edit($id) {
-    return [
-      '#markup' => $this->t('Edit functionality for entry ID: @id', ['@id' => $id]),
-    ];
-  }
-
-  /**
-   * Provides a delete form for a guestbook entry.
-   *
-   * @param int $id
-   *   The ID of the guestbook entry to delete.
-   *
-   * @return array
-   *   A render array for the delete form.
-   */
-  public function delete($id) {
-    return [
-      '#markup' => $this->t('Delete functionality for entry ID: @id', ['@id' => $id]),
     ];
   }
 

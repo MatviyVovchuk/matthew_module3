@@ -4,6 +4,7 @@ namespace Drupal\matthew_guestbook\Service;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleExtensionList;
 
 /**
  * Class GuestbookService.
@@ -11,7 +12,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
  * Provides service methods for managing guestbook entries.
  */
 class GuestbookService {
-
   /**
    * The entity type manager service.
    *
@@ -20,13 +20,26 @@ class GuestbookService {
   protected $entityTypeManager;
 
   /**
-   * Constructs a new GuestbookService object.
+   * The module extension list service.
+   *
+   * @var \Drupal\Core\Extension\ModuleExtensionList
+   */
+  protected $moduleExtensionList;
+
+  /**
+   * Constructs a GuestbookService object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager service.
+   *   The entity type manager.
+   * @param \Drupal\Core\Extension\ModuleExtensionList $module_extension_list
+   *   The module extension list service.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(
+    EntityTypeManagerInterface $entity_type_manager,
+    ModuleExtensionList $module_extension_list,
+  ) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->moduleExtensionList = $module_extension_list;
   }
 
   /**
@@ -168,6 +181,92 @@ class GuestbookService {
     $entity->save();
 
     return $entity;
+  }
+
+  /**
+   * Get the render array for a given media entity ID.
+   *
+   * @param mixed $media_id
+   *   The ID of the media entity, or null if the field is empty.
+   * @param string $field_name
+   *   The field name of the media entity.
+   * @param string $image_style
+   *   The image style to apply.
+   *
+   * @return array
+   *   A render array for the image,
+   *   or an empty array if the media entity or file could not be loaded.
+   */
+  public function getMediaFileRenderArray(mixed $media_id, string $field_name, string $image_style): array {
+    if (empty($media_id)) {
+      return [];
+    }
+
+    $media = $this->entityTypeManager->getStorage('media')->load($media_id);
+
+    if ($media && $media->hasField($field_name) && !$media->get($field_name)->isEmpty()) {
+      $file = $media->get($field_name)->entity;
+      if ($file) {
+        return [
+          '#theme' => 'image_style',
+          '#style_name' => $image_style,
+          '#uri' => $file->getFileUri(),
+          '#alt' => $media->label(),
+          '#attributes' => [
+            'class' => [$field_name === 'field_avatar_image' ? 'entry-avatar' : 'entry-review-image'],
+          ],
+        ];
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * Get the render array for the default avatar.
+   *
+   * @param string $name
+   *   The name of the entry author.
+   *
+   * @return array
+   *   A render array for the default avatar image.
+   */
+  public function getDefaultAvatarRenderArray(string $name): array {
+    $module_path = $this->moduleExtensionList->getPath('matthew_guestbook');
+    $default_avatar_path = $module_path . '/images/default_avatar.jpg';
+
+    return [
+      '#theme' => 'image',
+      '#uri' => $default_avatar_path,
+      '#alt' => $name . "'s default avatar",
+      '#attributes' => [
+        'class' => ['entry-avatar'],
+      ],
+    ];
+  }
+
+  /**
+   * Builds a link render array.
+   *
+   * This method generates a parameterized link with a title, URL, and attributes.
+   *
+   * @param string $title
+   *   The title of the link.
+   * @param string|\Drupal\Core\Url $url
+   *   The URL of the link (can be a string or a Drupal URL object).
+   * @param array $attributes
+   *   An array of HTML attributes for the link.
+   *
+   * @return array
+   *   A render array for the link.
+   */
+  public function buildLink(string $title, string|\Drupal\Core\Url $url, array $attributes = []): array {
+    return [
+      '#type' => 'link',
+      '#title' => $title,
+      '#url' => is_string($url) ? \Drupal\Core\Url::fromUri($url) : $url,
+      '#attributes' => $attributes,
+    ];
   }
 
 }

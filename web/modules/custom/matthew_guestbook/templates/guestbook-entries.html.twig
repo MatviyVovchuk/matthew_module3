@@ -9,8 +9,8 @@
         <!-- First group: User data and date -->
         <div class="entry-group entry-user-data">
           <div class="entry-header">
-            {% if entry.avatar_render_array %}
-              {{ entry.avatar_render_array }}
+            {% if entry.rendered_avatar %}
+              {{ entry.rendered_avatar }}
             {% endif %}
             <h2>{{ entry.name.value }}</h2>
           </div>
@@ -23,8 +23,8 @@
           <p>{{ entry.message.value }}</p>
           <p class="field-label">{{ 'Review'|t }}</p>
           <p>{{ entry.review.value }}</p>
-          {% if entry.review_image_render_array %}
-            {{ entry.review_image_render_array }}
+          {% if entry.rendered_review_image %}
+            {{ entry.rendered_review_image }}
           {% endif %}
         </div>
 

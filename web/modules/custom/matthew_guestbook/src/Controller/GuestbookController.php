@@ -66,13 +66,13 @@ class GuestbookController extends ControllerBase {
     foreach ($entries as $entry) {
       // Load the avatar image or set a default avatar.
       $avatar_id = $entry->get('avatar')->target_id;
-      $entry->avatar_render_array = $avatar_id
+      $entry->rendered_avatar = $avatar_id
         ? $this->guestbookService->getMediaFileRenderArray($avatar_id, 'field_avatar_image', 'matthew_guestbook_avatar')
         : $this->guestbookService->getDefaultAvatarRenderArray($entry->get('name')->value);
 
       // Load the review image.
       $review_image_id = $entry->get('review_image')->target_id;
-      $entry->review_image_render_array = $this->guestbookService->getMediaFileRenderArray(
+      $entry->rendered_review_image = $this->guestbookService->getMediaFileRenderArray(
         $review_image_id,
         'field_review_image',
         'matthew_guestbook_review'

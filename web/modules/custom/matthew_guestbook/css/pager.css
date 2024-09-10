@@ -27,16 +27,16 @@
   height: 2rem;
   padding: 0 0.5rem;
   text-decoration: none;
-  color: var(--gin-color-text);
-  background-color: var(--gin-bg-layer2);
-  border-radius: var(--gin-border-s);
+  color: #333333;
+  background-color: #f1f1f3;
+  border-radius: 4px;
   transition: all 0.2s ease-in-out;
 }
 
 .pager__item a:hover,
 .pager__item a:focus {
-  background-color: var(--gin-color-primary-light);
-  color: var(--gin-color-primary-active);
+  background-color: #e6e6ff;
+  color: #0036b1;
 }
 
 .pager__item--current {
@@ -50,26 +50,24 @@
   min-width: 2rem;
   height: 2rem;
   padding: 0 0.5rem;
-  background-color: var(--gin-color-primary);
-  color: var(--gin-color-button-text);
-  border-radius: var(--gin-border-s);
+  background-color: #0036b1;
+  color: #ffffff;
+  border-radius: 4px;
 }
 
-/* General styles for all pagination elements */
 .pager__link {
   position: relative;
   overflow: hidden;
   transition: color 0.3s ease;
 }
 
-/* Styles for numeric elements */
 .pager__item--number .pager__link::before,
 .pager__item--number .pager__link::after {
   content: '';
   position: absolute;
   width: 100%;
   height: 2px;
-  background-color: var(--gin-color-primary);
+  background-color: #0036b1;
   transition: transform 0.3s ease;
 }
 
@@ -93,12 +91,11 @@
 }
 
 .pager__item--number .pager__link:hover {
-  color: var(--gin-color-primary);
+  color: #0036b1;
 }
 
-/* Styles for active element */
 .pager__item--number .pager__link.is-active {
-  background-color: var(--gin-color-primary);
+  background-color: #0036b1;
   color: white;
 }
 
@@ -114,14 +111,13 @@
   transition: transform 0.3s ease;
 }
 
-/* Styles for first and previous */
 .pager__item--first .pager__link::after,
 .pager__item--previous .pager__link::after {
   content: '';
   position: absolute;
   width: 100%;
   height: 2px;
-  background-color: var(--gin-color-primary) !important;
+  background-color: #0036b1 !important;
   bottom: 0;
   right: 0;
   transform: translateX(100%);
@@ -133,14 +129,13 @@
   transform: translateX(0);
 }
 
-/* Styles for next and last */
 .pager__item--next .pager__link::before,
 .pager__item--last .pager__link::before {
   content: '';
   position: absolute;
   width: 100%;
   height: 2px;
-  background-color: var(--gin-color-primary) !important;
+  background-color: #0036b1 !important;
   top: 0;
   left: 0;
   transform: translateX(-100%);
@@ -152,14 +147,13 @@
   transform: translateX(0);
 }
 
-/* General hover style */
 .pager__link:hover .pager__item-title {
-  color: var(--gin-color-primary) !important;
+  color: #0036b1 !important;
 }
 
 .pager__item--first .pager__link:hover::before,
 .pager__item--previous .pager__link:hover::before,
 .pager__item--next .pager__link:hover::after,
 .pager__item--last .pager__link:hover::after {
-  background-color: var(--gin-color-primary) !important;
+  background-color: #0036b1 !important;
 }

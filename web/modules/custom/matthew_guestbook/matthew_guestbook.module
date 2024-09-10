@@ -19,6 +19,7 @@ function matthew_guestbook_theme(array $existing, string $type, string $theme, s
     'guestbook-entries' => [
       'variables' => [
         'entries' => [],
+        'pager' => [],
       ],
     ],
   ];

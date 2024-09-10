@@ -2,6 +2,7 @@ guestbook_entries:
   css:
     theme:
       css/guestbook-entries.css: {}
+      css/pager.css: {}
 
 form-style:
   version: 1.x

@@ -157,3 +157,9 @@
 .pager__item--last .pager__link:hover::after {
   background-color: #0036b1 !important;
 }
+
+@media screen and (max-width: 1055px) {
+  ul.pager__items.js-pager__items {
+    gap: 5px;
+  }
+}

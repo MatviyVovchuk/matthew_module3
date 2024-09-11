@@ -5,7 +5,16 @@ namespace Drupal\matthew_guestbook\Traits;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Ajax\MessageCommand;
+use Drupal\Core\Ajax\RedirectCommand;
+use Drupal\Core\Ajax\ReplaceCommand;
+use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RedirectDestinationInterface;
+use Drupal\Core\Url;
+use Drupal\matthew_guestbook\Form\AddGuestbookRecordForm;
+use Drupal\matthew_guestbook\Service\GuestbookService;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Implements a trait to provide form functionality.
@@ -14,6 +23,70 @@ trait GuestbookFormTrait {
   const AVATAR_MAX_SIZE = 2 * 1024 * 1024;
   const REVIEW_IMAGE_MAX_SIZE = 5 * 1024 * 1024;
   const ALLOWED_EXTENSIONS = 'jpeg jpg png';
+
+  /**
+   * The redirect destination service.
+   *
+   * @var \Drupal\Core\Routing\RedirectDestinationInterface
+   */
+  protected $redirectDestination;
+
+  /**
+   * The logger service.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
+   * The form builder.
+   *
+   * @var \Drupal\Core\Form\FormBuilderInterface
+   */
+  protected $formBuilder;
+
+  /**
+   * The guestbook service.
+   *
+   * @var \Drupal\matthew_guestbook\Service\GuestbookService
+   */
+  protected $guestbookService;
+
+  /**
+   * Constructs a new object.
+   *
+   * @param \Drupal\Core\Routing\RedirectDestinationInterface $redirect_destination
+   *   The redirect destination service.
+   * @param \Drupal\matthew_guestbook\Service\GuestbookService $guestbook_service
+   *   The guestbook service to handle database operations.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   The logger service.
+   * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
+   *   The form builder.
+   */
+  public function __construct(
+    RedirectDestinationInterface $redirect_destination,
+    GuestbookService $guestbook_service,
+    LoggerInterface $logger,
+    FormBuilderInterface $form_builder,
+  ) {
+    $this->redirectDestination = $redirect_destination;
+    $this->guestbookService = $guestbook_service;
+    $this->logger = $logger;
+    $this->formBuilder = $form_builder;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container): AddGuestbookRecordForm|static {
+    return new static(
+      $container->get('redirect.destination'),
+      $container->get('matthew.guestbook_service'),
+      $container->get('logger.channel.default'),
+      $container->get('form_builder')
+    );
+  }
 
   /**
    * Define the form elements for the guestbook form.
@@ -317,6 +390,55 @@ trait GuestbookFormTrait {
     $this->validatePhoneAjaxCallback($form, $form_state);
     $this->validateMessageAjaxCallback($form, $form_state);
     $this->validateReviewAjaxCallback($form, $form_state);
+  }
+
+  /**
+   * Resets the form state and rebuilds the form.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state object.
+   * @param array $form
+   *   The original form array.
+   * @param string $form_id
+   *   The ID of the form to be rebuilt.
+   * @param \Drupal\Core\Ajax\AjaxResponse &$response
+   *   The Ajax response object passed by reference.
+   */
+  public function resetAndRebuildForm(FormStateInterface $form_state, array $form, string $form_id, AjaxResponse &$response): void {
+    // Reset the form state by clearing values and user input.
+    $form_state->setRebuild();
+    $form_state->setValues([]);
+    $form_state->setUserInput([]);
+
+    // Rebuild the form.
+    $rebuilt_form = $this->formBuilder->rebuildForm($form_id, $form_state, $form);
+
+    // Add a command to the existing Ajax response to replace the form.
+    $response->addCommand(new ReplaceCommand('#' . $form_id, $rebuilt_form));
+  }
+
+  /**
+   * Redirects by the route name.
+   *
+   * @param string $route_name
+   *   The route name to redirect to.
+   * @param \Drupal\Core\Ajax\AjaxResponse &$response
+   *   The Ajax response object passed by reference.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   An Ajax response with the redirect command.
+   */
+  public function redirectByRouteName(string $route_name, AjaxResponse &$response): AjaxResponse {
+    // Generate the URL for the target route.
+    $url = Url::fromRoute($route_name);
+
+    // Create a redirect command with the generated URL.
+    $command = new RedirectCommand($url->toString());
+
+    // Prepare an Ajax response that includes the redirect command.
+    $response->addCommand($command);
+
+    return $response;
   }
 
 }

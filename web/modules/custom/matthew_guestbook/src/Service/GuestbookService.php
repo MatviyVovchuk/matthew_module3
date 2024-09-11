@@ -2,11 +2,14 @@
 
 namespace Drupal\matthew_guestbook\Service;
 
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\Core\Url;
+use JetBrains\PhpStorm\NoReturn;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Class GuestbookService.
@@ -36,6 +39,13 @@ class GuestbookService {
   protected $pagerManager;
 
   /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
    * Constructs a GuestbookService object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -44,15 +54,19 @@ class GuestbookService {
    *   The module extension list service.
    * @param \Drupal\Core\Pager\PagerManagerInterface $pager_manager
    *   The pager manager service.
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   *   The date formatter service.
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
     ModuleExtensionList $module_extension_list,
     PagerManagerInterface $pager_manager,
+    DateFormatterInterface $date_formatter,
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->moduleExtensionList = $module_extension_list;
     $this->pagerManager = $pager_manager;
+    $this->dateFormatter = $date_formatter;
   }
 
   /**
@@ -305,6 +319,67 @@ class GuestbookService {
 
     // Load and return the guestbook entry entities.
     return $this->entityTypeManager->getStorage('guestbook_entry')->loadMultiple($ids);
+  }
+
+  /**
+   * Retrieves the last page number based on the total number of entries.
+   *
+   * @param int $items_per_page
+   *   Number of items to display per page.
+   *
+   * @return int
+   *   The last available page number.
+   */
+  public function getLastPage(int $items_per_page = 5): int {
+    // Get total count of guestbook entries.
+    $total_count = $this->entityTypeManager->getStorage('guestbook_entry')->getQuery()
+      ->accessCheck(TRUE)
+      ->count()
+      ->execute();
+
+    // Calculate the last page number.
+    // Subtract 1 to account for page starting at 0.
+    $last_page = (int) ceil($total_count / $items_per_page) - 1;
+
+    // Ensure that the page number is at least 0.
+    return max($last_page, 0);
+  }
+
+  /**
+   * Redirects to a specific page.
+   *
+   * This function handles the redirection to a given page route.
+   *
+   * @param string $route
+   *   The route name to redirect to.
+   * @param array $parameters
+   *   An associative array of route parameters, key is the parameter name
+   *   and the value is the parameter value.
+   * @param int $status
+   *   The HTTP status code to use for the redirect. Defaults to 302 (Found).
+   */
+  #[NoReturn] public function redirectToPage(string $route, array $parameters = [], int $status = 302): void {
+    // Generate the URL from the provided route and parameters.
+    $url = Url::fromRoute($route, $parameters)->toString();
+    $response = new RedirectResponse($url, $status);
+    $response->send();
+    exit();
+  }
+
+  /**
+   * Formats the provided date.
+   *
+   * @param int $timestamp
+   *   The timestamp to format.
+   * @param string $date_format
+   *   The date format string.
+   *
+   * @return string
+   *   The formatted date string.
+   */
+  public function formatDate(int $timestamp, string $date_format): string {
+    // Use the date formatter service to format the given timestamp.
+    return $this->dateFormatter->format($timestamp, $date_format);
   }
 
 }

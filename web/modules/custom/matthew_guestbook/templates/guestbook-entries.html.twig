@@ -4,6 +4,7 @@
     <p>{{ 'You can add new entries by clicking the button below.'|t }}</p>
     <a href="{{ path('matthew_guestbook.add') }}" class="button button--primary">{{ 'Add New Entry'|t }}</a>
   {% else %}
+    <a href="{{ path('matthew_guestbook.add') }}" class="button button--primary">{{ 'Add New Entry'|t }}</a>
     {% for entry in entries %}
       <div class="guestbook-entry">
         <!-- First group: User data and date -->

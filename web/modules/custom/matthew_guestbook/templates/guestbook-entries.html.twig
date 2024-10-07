@@ -34,13 +34,13 @@
           <p class="entry-meta">{{ 'Phone:'|t }} <a class="mail-phone-link" href="tel:{{ entry.phone.value }}">{{ entry.phone.value }}</a></p>
         </div>
 
-{#        <!-- Administrator actions -->#}
-{#        {% if is_admin %}#}
-{#          <div class="entry-actions">#}
-{#            <a href="{{ path('matthew_guestbook.edit', {'id': entry.id}) }}" class="button button--action button--primary edit-button">{{ 'Edit'|t }}</a>#}
-{#            <a href="{{ path('matthew_guestbook.delete', {'id': entry.id}) }}" class="button button--action button--danger delete-button">{{ 'Delete'|t }}</a>#}
-{#          </div>#}
-{#        {% endif %}#}
+        <!-- Administrator actions -->
+        {% if is_admin %}
+          <div class="entry-actions">
+            <a href="{{ path('matthew_guestbook.edit', {'id': entry.id.value}) }}" class="button button--action button--primary edit-button">{{ 'Edit'|t }}</a>
+            <a href="{{ path('matthew_guestbook.delete', {'id': entry.id.value}) }}" class="button button--action button--danger delete-button">{{ 'Delete'|t }}</a>
+          </div>
+        {% endif %}
       </div>
     {% endfor %}
   {% endif %}

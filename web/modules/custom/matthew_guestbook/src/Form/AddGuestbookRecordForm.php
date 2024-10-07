@@ -3,13 +3,14 @@
 namespace Drupal\matthew_guestbook\Form;
 
 use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\CssCommand;
+use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Ajax\MessageCommand;
 use Drupal\Core\Ajax\ReplaceCommand;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\matthew_guestbook\Service\GuestbookService;
+use Drupal\matthew_guestbook\Traits\GuestbookFormTrait;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -17,9 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Implements a custom Guestbook form.
  */
 class AddGuestbookRecordForm extends FormBase {
-  const AVATAR_MAX_SIZE = 2 * 1024 * 1024;
-  const REVIEW_IMAGE_MAX_SIZE = 5 * 1024 * 1024;
-  const ALLOWED_EXTENSIONS = 'jpeg jpg png';
+  use GuestbookFormTrait;
 
   /**
    * The logger service.
@@ -29,13 +28,6 @@ class AddGuestbookRecordForm extends FormBase {
   protected $logger;
 
   /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
    * The form builder.
    *
    * @var \Drupal\Core\Form\FormBuilderInterface
@@ -43,18 +35,29 @@ class AddGuestbookRecordForm extends FormBase {
   protected $formBuilder;
 
   /**
+   * The guestbook service.
+   *
+   * @var \Drupal\matthew_guestbook\Service\GuestbookService
+   */
+  protected $guestbookService;
+
+  /**
    * Constructs a new object.
    *
+   * @param \Drupal\matthew_guestbook\Service\GuestbookService $guestbook_service
+   *   The guestbook service to handle database operations.
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger service.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
    * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
    *   The form builder.
    */
-  public function __construct(LoggerInterface $logger, EntityTypeManagerInterface $entity_type_manager, FormBuilderInterface $form_builder) {
+  public function __construct(
+    GuestbookService $guestbook_service,
+    LoggerInterface $logger,
+    FormBuilderInterface $form_builder,
+  ) {
+    $this->guestbookService = $guestbook_service;
     $this->logger = $logger;
-    $this->entityTypeManager = $entity_type_manager;
     $this->formBuilder = $form_builder;
   }
 
@@ -63,8 +66,8 @@ class AddGuestbookRecordForm extends FormBase {
    */
   public static function create(ContainerInterface $container): AddGuestbookRecordForm|static {
     return new static(
+      $container->get('matthew.guestbook_service'),
       $container->get('logger.channel.default'),
-      $container->get('entity_type.manager'),
       $container->get('form_builder')
     );
   }
@@ -83,130 +86,8 @@ class AddGuestbookRecordForm extends FormBase {
     // Add form fields.
     $form['#id'] = $this->getFormId();
 
-    $form['name'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Name'),
-      '#description' => $this->t('Enter your full name. Must be at least 2 characters long.'),
-      '#required' => TRUE,
-      '#maxlength' => 100,
-      '#attributes' => [
-        'pattern' => '.{2,}',
-      ],
-      '#ajax' => [
-        'event' => 'change',
-        'callback' => '::validateNameAjaxCallback',
-      ],
-    ];
-
-    $form['email'] = [
-      '#type' => 'email',
-      '#title' => $this->t('Email'),
-      '#description' => $this->t('Enter a valid email address.'),
-      '#required' => TRUE,
-      '#ajax' => [
-        'event' => 'change',
-        'callback' => '::validateEmailAjaxCallback',
-      ],
-    ];
-
-    $form['phone'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Phone Number'),
-      '#description' => $this->t('Enter your phone number. Only digits are allowed and it should not exceed 12 characters.'),
-      '#required' => TRUE,
-      '#attributes' => [
-        'maxlength' => 12,
-      ],
-      '#ajax' => [
-        'event' => 'change',
-        'callback' => '::validatePhoneAjaxCallback',
-      ],
-    ];
-
-    $form['message'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Message'),
-      '#description' => $this->t('Enter your message or feedback.'),
-      '#required' => TRUE,
-      '#ajax' => [
-        'event' => 'change',
-        'callback' => '::validateMessageAjaxCallback',
-      ],
-    ];
-
-    $form['review'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Review'),
-      '#description' => $this->t('Enter your review.'),
-      '#required' => TRUE,
-      '#ajax' => [
-        'event' => 'change',
-        'callback' => '::validateReviewAjaxCallback',
-      ],
-    ];
-
-    $form['avatar'] = [
-      '#type' => 'media_library',
-      '#title' => $this->t('Avatar'),
-      '#description' => $this->t('Upload your avatar. Allowed formats: @formats. Max file size: @size.', [
-        '@formats' => self::ALLOWED_EXTENSIONS,
-        '@size' => format_size(self::AVATAR_MAX_SIZE),
-      ]),
-      '#allowed_bundles' => ['avatar'],
-      '#required' => FALSE,
-      '#upload_validators' => [
-        'file_validate_extensions' => [self::ALLOWED_EXTENSIONS],
-        'file_validate_size' => [self::AVATAR_MAX_SIZE],
-      ],
-      '#ajax' => [
-        'callback' => '::validateAvatarAjaxCallback',
-        'event' => 'change',
-        'progress' => [
-          'type' => 'throbber',
-          'message' => $this->t('Validating...'),
-        ],
-      ],
-    ];
-
-    $form['review_image'] = [
-      '#type' => 'media_library',
-      '#title' => $this->t('Review Image'),
-      '#description' => $this->t('Upload an image for your review. Allowed formats: @formats. Max file size: @size.', [
-        '@formats' => self::ALLOWED_EXTENSIONS,
-        '@size' => format_size(self::REVIEW_IMAGE_MAX_SIZE),
-      ]),
-      '#allowed_bundles' => ['review_image'],
-      '#required' => FALSE,
-      '#upload_validators' => [
-        'file_validate_extensions' => [self::ALLOWED_EXTENSIONS],
-        'file_validate_size' => [self::REVIEW_IMAGE_MAX_SIZE],
-      ],
-      '#ajax' => [
-        'callback' => '::validateReviewImageAjaxCallback',
-        'event' => 'change',
-        'progress' => [
-          'type' => 'throbber',
-          'message' => $this->t('Validating...'),
-        ],
-      ],
-    ];
-
-    $form['actions']['#type'] = 'actions';
-    $form['actions']['submit'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Submit'),
-      '#button_type' => 'primary',
-      '#ajax' => [
-        'callback' => '::submitFormAjaxCallback',
-        'event' => 'click',
-      ],
-    ];
-
-    $form['#attached'] = [
-      'library' => [
-        'matthew_guestbook/media_library_styles',
-      ],
-    ];
+    // Use form traits to render form fields.
+    $this->traitBuildForm($form, $form_state);
 
     return $form;
   }
@@ -230,7 +111,17 @@ class AddGuestbookRecordForm extends FormBase {
     bool $is_valid,
   ): void {
     $response->addCommand(new MessageCommand($this->t('@message', ['@message' => $message]), NULL, ['type' => $is_valid ? 'status' : 'error']));
-    $response->addCommand(new CssCommand($selector, ['border' => $is_valid ? '1px solid green' : '1px solid red']));
+
+    // Determine the classes to add and remove.
+    $success_class = 'validation-success';
+    $error_class = 'validation-error';
+
+    // Remove both classes from the element.
+    $response->addCommand(new InvokeCommand($selector, 'removeClass', [$success_class]));
+    $response->addCommand(new InvokeCommand($selector, 'removeClass', [$error_class]));
+
+    // Add the appropriate class based on validation status.
+    $response->addCommand(new InvokeCommand($selector, 'addClass', [$is_valid ? $success_class : $error_class]));
   }
 
   /**
@@ -362,78 +253,6 @@ class AddGuestbookRecordForm extends FormBase {
   }
 
   /**
-   * Validate media file.
-   *
-   * @param string $media_id
-   *   The media entity ID.
-   * @param string $field_name
-   *   The form field name.
-   * @param array $validators
-   *   The upload validators.
-   *
-   * @return \Drupal\Core\Ajax\AjaxResponse
-   *   The AJAX response.
-   */
-  protected function validateMediaFile($media_id, $field_name, array $validators): AjaxResponse {
-    $ajax_response = new AjaxResponse();
-    $media_entity = $this->entityTypeManager->getStorage('media')->load($media_id);
-
-    if ($media_entity) {
-      $file_id = $media_entity->get('field_media_image')->target_id;
-      if (!empty($file_id)) {
-        $file = $this->entityTypeManager->getStorage('file')->load($file_id);
-        if ($file) {
-          $errors = file_validate($file, $validators);
-          if (!empty($errors)) {
-            $error_message = reset($errors);
-            $this->addValidationResponse($ajax_response, $error_message, "[data-drupal-selector=\"edit-{$field_name}-wrapper\"]", FALSE);
-          }
-          else {
-            $this->addValidationResponse($ajax_response, $this->t('@label is valid.', ['@label' => ucfirst($field_name)]), "[data-drupal-selector=\"edit-{$field_name}-wrapper\"]", TRUE);
-          }
-        }
-      }
-    }
-    else {
-      $this->addValidationResponse($ajax_response, $this->t('No @field_name selected.', ['@field_name' => $field_name]), "[data-drupal-selector=\"edit-{$field_name}-wrapper\"]", TRUE);
-    }
-
-    return $ajax_response;
-  }
-
-  /**
-   * AJAX callback to validate the avatar.
-   *
-   * @param array $form
-   *   The form array.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state interface.
-   *
-   * @return \Drupal\Core\Ajax\AjaxResponse
-   *   The AJAX response.
-   */
-  public function validateAvatarAjaxCallback(array &$form, FormStateInterface $form_state): AjaxResponse {
-    $avatar = $form_state->getValue('avatar');
-    return $this->validateMediaFile($avatar, 'avatar', $form['avatar']['#upload_validators']);
-  }
-
-  /**
-   * AJAX callback to validate the review image.
-   *
-   * @param array $form
-   *   The form array.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state interface.
-   *
-   * @return \Drupal\Core\Ajax\AjaxResponse
-   *   The AJAX response.
-   */
-  public function validateReviewImageAjaxCallback(array &$form, FormStateInterface $form_state): AjaxResponse {
-    $review_image = $form_state->getValue('review_image');
-    return $this->validateMediaFile($review_image, 'review_image', $form['review_image']['#upload_validators']);
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
@@ -462,7 +281,7 @@ class AddGuestbookRecordForm extends FormBase {
       $values = $form_state->getValues();
 
       // Create a new guestbook entry.
-      $this->entityTypeManager->getStorage('guestbook_entry')->create([
+      $this->guestbookService->addEntry([
         'name' => $values['name'],
         'email' => $values['email'],
         'phone' => $values['phone'],
@@ -470,7 +289,7 @@ class AddGuestbookRecordForm extends FormBase {
         'review' => $values['review'],
         'avatar' => $values['avatar'],
         'review_image' => $values['review_image'],
-      ])->save();
+      ]);
 
       // Display success message.
       $response->addCommand(new MessageCommand(

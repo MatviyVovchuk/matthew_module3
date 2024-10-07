@@ -114,7 +114,6 @@
   transition: transform 0.3s ease;
 }
 
-
 /* Styles for first and previous */
 .pager__item--first .pager__link::after,
 .pager__item--previous .pager__link::after {

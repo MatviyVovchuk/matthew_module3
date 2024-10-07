@@ -3,14 +3,11 @@
 namespace Drupal\matthew_guestbook\Form;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\matthew_guestbook\Traits\GuestbookFormTrait;
 
 /**
  * Implements a custom Guestbook edit form.
  */
 class EditGuestbookRecordForm extends AddGuestbookRecordForm {
-  use GuestbookFormTrait;
-
   /**
    * The ID of the cat record.
    *

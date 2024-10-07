@@ -1,7 +1,7 @@
 services:
   matthew.guestbook_service:
     class: 'Drupal\matthew_guestbook\Service\GuestbookService'
-    arguments: [ '@entity_type.manager' ]
+    arguments: ['@entity_type.manager', '@extension.list.module']
 
   logger.channel.matthew_guestbook:
     class: 'Drupal\Core\Logger\LoggerChannel'

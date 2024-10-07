@@ -17,7 +17,6 @@ matthew_guestbook.add:
 matthew_guestbook.edit:
   path: '/guestbook/{id}/edit'
   defaults:
-#    _controller: '\Drupal\matthew_guestbook\Controller\GuestbookController::edit'
     _form: '\Drupal\matthew_guestbook\Form\EditGuestbookRecordForm'
     _title: 'Edit Guestbook Entry'
   requirements:
@@ -26,7 +25,6 @@ matthew_guestbook.edit:
 matthew_guestbook.delete:
   path: '/guestbook/{id}/delete'
   defaults:
-#    _controller: '\Drupal\matthew_guestbook\Controller\GuestbookController::delete'
     _form: '\Drupal\matthew_guestbook\Form\DeleteGuestbookRecordForm'
     _title: 'Delete Guestbook Entry'
   requirements:

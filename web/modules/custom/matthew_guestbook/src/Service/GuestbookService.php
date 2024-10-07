@@ -5,6 +5,8 @@ namespace Drupal\matthew_guestbook\Service;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\Pager\PagerManagerInterface;
+use Drupal\Core\Url;
 
 /**
  * Class GuestbookService.
@@ -27,19 +29,30 @@ class GuestbookService {
   protected $moduleExtensionList;
 
   /**
+   * The pager manager service.
+   *
+   * @var \Drupal\Core\Pager\PagerManagerInterface
+   */
+  protected $pagerManager;
+
+  /**
    * Constructs a GuestbookService object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    * @param \Drupal\Core\Extension\ModuleExtensionList $module_extension_list
    *   The module extension list service.
+   * @param \Drupal\Core\Pager\PagerManagerInterface $pager_manager
+   *   The pager manager service.
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
     ModuleExtensionList $module_extension_list,
+    PagerManagerInterface $pager_manager,
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->moduleExtensionList = $module_extension_list;
+    $this->pagerManager = $pager_manager;
   }
 
   /**
@@ -248,7 +261,7 @@ class GuestbookService {
   /**
    * Builds a link render array.
    *
-   * This method generates a parameterized link with a title, URL, and attributes.
+   * This method generates a link with a title, URL, and attributes.
    *
    * @param string $title
    *   The title of the link.
@@ -260,13 +273,38 @@ class GuestbookService {
    * @return array
    *   A render array for the link.
    */
-  public function buildLink(string $title, string|\Drupal\Core\Url $url, array $attributes = []): array {
+  public function buildLink(string $title, string|Url $url, array $attributes = []): array {
     return [
       '#type' => 'link',
       '#title' => $title,
-      '#url' => is_string($url) ? \Drupal\Core\Url::fromUri($url) : $url,
+      '#url' => is_string($url) ? Url::fromUri($url) : $url,
       '#attributes' => $attributes,
     ];
+  }
+
+  /**
+   * Retrieves paginated guestbook entries.
+   *
+   * @param int $items_per_page
+   *   Number of items to display per page.
+   *
+   * @return array
+   *   An array of loaded guestbook entry entities.
+   */
+  public function getPaginatedGuestbookEntries(int $items_per_page = 5): array {
+    // Create a query for guestbook entries.
+    $query = $this->entityTypeManager->getStorage('guestbook_entry')->getQuery()
+      ->sort('created', 'DESC')
+      ->accessCheck(TRUE);
+
+    // Add pager to the query.
+    $query = $query->pager($items_per_page);
+
+    // Execute the query to get entity IDs.
+    $ids = $query->execute();
+
+    // Load and return the guestbook entry entities.
+    return $this->entityTypeManager->getStorage('guestbook_entry')->loadMultiple($ids);
   }
 
 }

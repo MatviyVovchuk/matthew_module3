@@ -1,0 +1,166 @@
+.pager {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pager__items {
+  display: flex;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.pager__item {
+  margin: 0 0.25rem;
+}
+
+.pager__item a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  text-decoration: none;
+  color: var(--gin-color-text);
+  background-color: var(--gin-bg-layer2);
+  border-radius: var(--gin-border-s);
+  transition: all 0.2s ease-in-out;
+}
+
+.pager__item a:hover,
+.pager__item a:focus {
+  background-color: var(--gin-color-primary-light);
+  color: var(--gin-color-primary-active);
+}
+
+.pager__item--current {
+  font-weight: bold;
+}
+
+.pager__item--current span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  background-color: var(--gin-color-primary);
+  color: var(--gin-color-button-text);
+  border-radius: var(--gin-border-s);
+}
+
+/* General styles for all pagination elements */
+.pager__link {
+  position: relative;
+  overflow: hidden;
+  transition: color 0.3s ease;
+}
+
+/* Styles for numeric elements */
+.pager__item--number .pager__link::before,
+.pager__item--number .pager__link::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: var(--gin-color-primary);
+  transition: transform 0.3s ease;
+}
+
+.pager__item--number .pager__link::before,
+.pager__item--number .pager__link.is-active::before {
+  top: 0;
+  left: 0;
+  transform: translateX(-100%);
+}
+
+.pager__item--number .pager__link::after,
+.pager__item--number .pager__link.is-active::after {
+  bottom: 0;
+  right: 0;
+  transform: translateX(100%);
+}
+
+.pager__item--number .pager__link:hover::before,
+.pager__item--number .pager__link:hover::after {
+  transform: translateX(0);
+}
+
+.pager__item--number .pager__link:hover {
+  color: var(--gin-color-primary);
+}
+
+/* Styles for active element */
+.pager__item--number .pager__link.is-active {
+  background-color: var(--gin-color-primary);
+  color: white;
+}
+
+.pager__item--number .pager__link.is-active::before,
+.pager__item--number .pager__link.is-active::after {
+  background-color: white;
+}
+
+.pager__item--number .pager__link.is-active:hover::before,
+.pager__item--number .pager__link.is-active:hover::after {
+  background-color: white;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
+
+
+/* Styles for first and previous */
+.pager__item--first .pager__link::after,
+.pager__item--previous .pager__link::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: var(--gin-color-primary) !important;
+  bottom: 0;
+  right: 0;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.pager__item--first .pager__link:hover::after,
+.pager__item--previous .pager__link:hover::after {
+  transform: translateX(0);
+}
+
+/* Styles for next and last */
+.pager__item--next .pager__link::before,
+.pager__item--last .pager__link::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: var(--gin-color-primary) !important;
+  top: 0;
+  left: 0;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.pager__item--next .pager__link:hover::before,
+.pager__item--last .pager__link:hover::before {
+  transform: translateX(0);
+}
+
+/* General hover style */
+.pager__link:hover .pager__item-title {
+  color: var(--gin-color-primary) !important;
+}
+
+.pager__item--first .pager__link:hover::before,
+.pager__item--previous .pager__link:hover::before,
+.pager__item--next .pager__link:hover::after,
+.pager__item--last .pager__link:hover::after {
+  background-color: var(--gin-color-primary) !important;
+}

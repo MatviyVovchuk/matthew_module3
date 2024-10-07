@@ -1,0 +1,13 @@
+uuid: db955cb1-4e0e-4a8d-8497-5d8cd79eb221
+langcode: en
+status: true
+dependencies: {  }
+id: review_image
+label: 'Review Image'
+description: 'Media type for review images.'
+source: image
+queue_thumbnail_downloads: false
+new_revision: false
+source_configuration:
+  source_field: field_review_image
+field_map: {  }

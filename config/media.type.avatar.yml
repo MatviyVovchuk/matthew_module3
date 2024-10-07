@@ -1,0 +1,13 @@
+uuid: ca9db291-775f-4e67-86a3-f08c3721ec4d
+langcode: en
+status: true
+dependencies: {  }
+id: avatar
+label: Avatar
+description: 'Media type for user avatars.'
+source: image
+queue_thumbnail_downloads: false
+new_revision: false
+source_configuration:
+  source_field: field_avatar_image
+field_map: {  }

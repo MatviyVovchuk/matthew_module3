@@ -1,0 +1,8 @@
+uuid: 50c7e308-5486-431d-bf5e-3076fd44c5e0
+langcode: en
+status: true
+dependencies: {  }
+id: matthew_guestbook_date_format
+label: 'Matthew Guestbook date format'
+locked: false
+pattern: 'Y-m-d H:i:s'

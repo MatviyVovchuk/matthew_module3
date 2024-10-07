@@ -1,0 +1,32 @@
+uuid: fca1cad7-4322-4748-a8ce-f1afbedf665a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.media.review_image.field_review_image
+    - media.type.review_image
+  module:
+    - image
+id: media.review_image.default
+targetEntityType: media
+bundle: review_image
+mode: default
+content:
+  field_review_image:
+    type: image
+    label: visually_hidden
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  created: true
+  name: true
+  path: true
+  status: true
+  thumbnail: true
+  uid: true

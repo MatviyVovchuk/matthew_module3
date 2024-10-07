@@ -1,20 +1,50 @@
-<div id="form-messages"></div>
 <div class="guestbook-entries">
   {% if entries is empty %}
-  <p>{{ 'There are currently no entries in the guestbook.'|t }}</p>
-  <p>{{ 'You can add new entries by clicking the button below.'|t }}</p>
-  <a href="{{ path('matthew_guestbook.form') }}" class="button button--primary">{{ 'Add New Entry'|t }}</a>
+    <p>{{ 'There are currently no entries in the guestbook.'|t }}</p>
+    <p>{{ 'You can add new entries by clicking the button below.'|t }}</p>
+    <a href="{{ path('matthew_guestbook.add') }}" class="button button--primary">{{ 'Add New Entry'|t }}</a>
   {% else %}
-  {% for entry in entries %}
-    <div class="guestbook-entry">
-      <h3>{{ entry.name }}</h3>
-      <p><strong>Email:</strong> {{ entry.email }}</p>
-      <p><strong>Phone:</strong> {{ entry.phone }}</p>
-      <div class="content">{{ entry.message }}</div>
-      <small>{{ entry.created|date('d/m/Y H:i') }}</small>
-    </div>
-  {% else %}
-    <p>{{ 'No entries found.'|t }}</p>
-  {% endfor %}
+    {% for entry in entries %}
+      <div class="guestbook-entry">
+        <!-- First group: User data and date -->
+        <div class="entry-group entry-user-data">
+          <div class="entry-header">
+            {% if entry.avatar_render_array %}
+              {{ entry.avatar_render_array }}
+            {% endif %}
+            <h2>{{ entry.name.value }}</h2>
+          </div>
+          <p class="entry-date">{{ entry.formatted_created_date }}</p>
+        </div>
+
+        <!-- Second group: Feedback -->
+        <div class="entry-group entry-review">
+          <p class="field-label">{{ 'Message'|t }}</p>
+          <p>{{ entry.message.value }}</p>
+          <p class="field-label">{{ 'Review'|t }}</p>
+          <p>{{ entry.review.value }}</p>
+          {% if entry.review_image_render_array %}
+            {{ entry.review_image_render_array }}
+          {% endif %}
+        </div>
+
+        <!-- Third group: Contact details -->
+        <div class="entry-group entry-contact">
+          <p class="entry-meta">{{ 'Email:'|t }} <a class="mail-phone-link" href="mailto:{{ entry.email.value }}">{{ entry.email.value }}</a></p>
+          <p class="entry-meta">{{ 'Phone:'|t }} <a class="mail-phone-link" href="tel:{{ entry.phone.value }}">{{ entry.phone.value }}</a></p>
+        </div>
+
+{#        <!-- Administrator actions -->#}
+{#        {% if is_admin %}#}
+{#          <div class="entry-actions">#}
+{#            <a href="{{ path('matthew_guestbook.edit', {'id': entry.id}) }}" class="button button--action button--primary edit-button">{{ 'Edit'|t }}</a>#}
+{#            <a href="{{ path('matthew_guestbook.delete', {'id': entry.id}) }}" class="button button--action button--danger delete-button">{{ 'Delete'|t }}</a>#}
+{#          </div>#}
+{#        {% endif %}#}
+      </div>
+    {% endfor %}
   {% endif %}
 </div>
+
+
+

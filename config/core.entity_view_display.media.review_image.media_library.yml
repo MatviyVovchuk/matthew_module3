@@ -1,0 +1,33 @@
+uuid: 9463f8c1-1f4b-4ece-95ac-c7222bcbb3f1
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.media.media_library
+    - field.field.media.review_image.field_review_image
+    - media.type.review_image
+  module:
+    - image
+id: media.review_image.media_library
+targetEntityType: media
+bundle: review_image
+mode: media_library
+content:
+  thumbnail:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  created: true
+  field_review_image: true
+  name: true
+  path: true
+  status: true
+  uid: true

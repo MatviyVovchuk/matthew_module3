@@ -2,12 +2,16 @@
 
 namespace Drupal\matthew_guestbook\Form;
 
+use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\matthew_guestbook\Traits\GuestbookFormTrait;
 
 /**
  * Implements a custom Guestbook edit form.
  */
-class EditGuestbookRecordForm extends AddGuestbookRecordForm {
+class EditGuestbookRecordForm extends FormBase {
+  use GuestbookFormTrait;
+
   /**
    * The ID of the cat record.
    *
@@ -97,7 +101,7 @@ class EditGuestbookRecordForm extends AddGuestbookRecordForm {
       $this->messenger()->addStatus($this->t('The guestbook entry has been updated.'));
 
       // Redirect to the guestbook page.
-      $form_state->setRedirect('matthew_guestbook.page')->disableRedirect(FALSE)->setRebuild(FALSE);
+      $form_state->setRedirect('matthew_guestbook.page');
     }
     catch (\Exception $e) {
       $this->logger->error('Failed to update guestbook entry with ID @id. Error: @message', [

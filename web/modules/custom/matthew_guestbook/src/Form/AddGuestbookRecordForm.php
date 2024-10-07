@@ -4,72 +4,15 @@ namespace Drupal\matthew_guestbook\Form;
 
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\MessageCommand;
-use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Form\FormBase;
-use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\matthew_guestbook\Service\GuestbookService;
 use Drupal\matthew_guestbook\Traits\GuestbookFormTrait;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Implements a custom Guestbook form.
  */
 class AddGuestbookRecordForm extends FormBase {
   use GuestbookFormTrait;
-
-  /**
-   * The logger service.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
-   * The form builder.
-   *
-   * @var \Drupal\Core\Form\FormBuilderInterface
-   */
-  protected $formBuilder;
-
-  /**
-   * The guestbook service.
-   *
-   * @var \Drupal\matthew_guestbook\Service\GuestbookService
-   */
-  protected $guestbookService;
-
-  /**
-   * Constructs a new object.
-   *
-   * @param \Drupal\matthew_guestbook\Service\GuestbookService $guestbook_service
-   *   The guestbook service to handle database operations.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   The logger service.
-   * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
-   *   The form builder.
-   */
-  public function __construct(
-    GuestbookService $guestbook_service,
-    LoggerInterface $logger,
-    FormBuilderInterface $form_builder,
-  ) {
-    $this->guestbookService = $guestbook_service;
-    $this->logger = $logger;
-    $this->formBuilder = $form_builder;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container): AddGuestbookRecordForm|static {
-    return new static(
-      $container->get('matthew.guestbook_service'),
-      $container->get('logger.channel.default'),
-      $container->get('form_builder')
-    );
-  }
 
   /**
    * {@inheritdoc}
@@ -122,20 +65,14 @@ class AddGuestbookRecordForm extends FormBase {
       // Display success message.
       $response->addCommand(new MessageCommand(
         $this->t('%name, your entry has been saved.', [
-          '%name' => $form_state->getValue('name'),
+          '%name' => $values['name'],
         ]),
         NULL,
         ['type' => 'status']
       ));
 
-      // Reset form state and rebuild the form.
-      $form_state->setRebuild();
-      $form_state->setValues([]);
-      $form_state->setUserInput([]);
+      $this->resetAndRebuildForm($form_state, $form, $this->getFormId(), $response);
 
-      // Rebuild and replace the form.
-      $rebuilt_form = $this->formBuilder->rebuildForm($this->getFormId(), $form_state, $form);
-      $response->addCommand(new ReplaceCommand('#' . $this->getFormId(), $rebuilt_form));
     }
     catch (\Exception $e) {
       // Error logging for developers.

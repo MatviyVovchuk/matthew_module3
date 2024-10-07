@@ -3,10 +3,10 @@
 namespace Drupal\matthew_guestbook\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Url;
 use Drupal\matthew_guestbook\Service\GuestbookService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Controller for handling guestbook entries.
@@ -20,26 +20,26 @@ class GuestbookController extends ControllerBase {
   protected $guestbookService;
 
   /**
-   * The date formatter service.
+   * The request stack.
    *
-   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   * @var \Symfony\Component\HttpFoundation\RequestStack
    */
-  protected $dateFormatter;
+  protected $requestStack;
 
   /**
    * Constructs a new object.
    *
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack service.
    * @param \Drupal\matthew_guestbook\Service\GuestbookService $guestbook_service
    *   The guestbook service to handle database operations.
-   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
-   *   The date formatter service.
    */
   public function __construct(
+    RequestStack $request_stack,
     GuestbookService $guestbook_service,
-    DateFormatterInterface $date_formatter,
   ) {
+    $this->requestStack = $request_stack;
     $this->guestbookService = $guestbook_service;
-    $this->dateFormatter = $date_formatter;
   }
 
   /**
@@ -47,8 +47,8 @@ class GuestbookController extends ControllerBase {
    */
   public static function create(ContainerInterface $container): GuestbookController|static {
     return new static(
+      $container->get('request_stack'),
       $container->get('matthew.guestbook_service'),
-      $container->get('date.formatter'),
     );
   }
 
@@ -59,6 +59,28 @@ class GuestbookController extends ControllerBase {
    *   A render array for the guestbook entries form.
    */
   public function content(): array {
+    // Get the current request from the request stack.
+    $current_request = $this->requestStack->getCurrentRequest();
+
+    // Get the 'page' query parameter, defaulting to 0 if not set.
+    $page = $current_request->query->get('page', 0);
+
+    // Validate and sanitize the page number.
+    $page = intval($page);
+
+    // Get the total number of pages.
+    $total_pages = $this->guestbookService->getLastPage();
+
+    // Handle invalid page numbers.
+    if ($page < 0) {
+      // If the page is less than 0, redirect to page 0.
+      $this->guestbookService->redirectToPage('<current>', ['page' => 0]);
+    }
+    elseif ($page > $total_pages) {
+      // If page exceeds total, go to last.
+      $this->guestbookService->redirectToPage('<current>', ['page' => $total_pages]);
+    }
+
     // Load guestbook entries with pagination.
     $entries = $this->guestbookService->getPaginatedGuestbookEntries();
 
@@ -79,7 +101,7 @@ class GuestbookController extends ControllerBase {
       );
 
       // Format the created date.
-      $entry->formatted_created_date = $this->dateFormatter->format(
+      $entry->formatted_created_date = $this->guestbookService->formatDate(
         $entry->get('created')->value,
         'matthew_guestbook_date_format'
       );
